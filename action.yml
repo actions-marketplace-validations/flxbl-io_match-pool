@@ -3,7 +3,7 @@ description: "Match pool assignment rules based on branch and domain patterns us
 author: "flxbl-io"
 
 branding:
-  icon: "target"
+  icon: "anchor"
   color: "orange"
 
 inputs:
