@@ -1,0 +1,112 @@
+name: "Match Pool"
+description: "Match pool assignment rules based on branch and domain patterns using sfp server review-envs API"
+author: "flxbl-io"
+
+branding:
+  icon: "target"
+  color: "orange"
+
+inputs:
+  repository:
+    description: "Repository name (format: owner/repo)"
+    required: false
+    default: ${{ github.repository }}
+  branch:
+    description: "The branch to match against pool assignment rules"
+    required: true
+  domain:
+    description: "The domain to match against pool assignment rules"
+    required: true
+  fallback-pool:
+    description: "The pool to use if no matching rules are found"
+    required: false
+  sfp-server-url:
+    description: "URL to the SFP Server instance (e.g., https://your-org.flxbl.io)"
+    required: true
+  sfp-server-token:
+    description: "Token for SFP Server authentication"
+    required: true
+
+outputs:
+  pool-tag:
+    description: "The matched pool tag"
+    value: ${{ steps.match.outputs.poolTag }}
+  pool-type:
+    description: "The type of pool (SANDBOX or SCRATCH_ORG)"
+    value: ${{ steps.match.outputs.poolType }}
+  matched:
+    description: "Whether a match was found (true/false)"
+    value: ${{ steps.match.outputs.matched }}
+  match-result:
+    description: "Full match result as JSON"
+    value: ${{ steps.match.outputs.matchResult }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Print header
+      shell: bash
+      run: |
+        echo "------------------------------------------------------------------------------------------"
+        echo "flxbl-actions  -- ❤️  by flxbl.io ❤️  -Version:1.0.0"
+        echo "------------------------------------------------------------------------------------------"
+        echo "Action      : match-pool"
+        echo "Repository  : ${{ inputs.repository }}"
+        echo "Branch      : ${{ inputs.branch }}"
+        echo "Domain      : ${{ inputs.domain }}"
+        echo "SFP Server  : ${{ inputs.sfp-server-url }}"
+        echo "Fallback    : ${{ inputs.fallback-pool || 'N/A' }}"
+        echo "------------------------------------------------------------------------------------------"
+        echo ""
+
+    - name: Match Pool Assignment Rule
+      id: match
+      shell: bash
+      env:
+        SFP_SERVER_URL: ${{ inputs.sfp-server-url }}
+        SFP_SERVER_TOKEN: ${{ inputs.sfp-server-token }}
+      run: |
+        echo "Matching pool for branch: ${{ inputs.branch }} and domain: ${{ inputs.domain }}"
+
+        # Run the match command (banner goes to stderr, JSON to stdout)
+        MATCH_RESULT=$(sfp server review-envs rules match \
+          --repository "${{ inputs.repository }}" \
+          --branch "${{ inputs.branch }}" \
+          --domain "${{ inputs.domain }}" \
+          --json)
+
+        # Extract values from the result
+        MATCHED=$(echo "$MATCH_RESULT" | jq -r '.matched')
+
+        if [[ "$MATCHED" == "true" ]]; then
+          POOL_TAG=$(echo "$MATCH_RESULT" | jq -r '.poolTag')
+          # Extract pool type from the assignment if available
+          POOL_TYPE=$(echo "$MATCH_RESULT" | jq -r '.assignment.poolType // "SANDBOX"')
+          echo "Found matching pool: $POOL_TAG (type: $POOL_TYPE)"
+        else
+          # Use fallback pool if provided
+          if [[ -n "${{ inputs.fallback-pool }}" ]]; then
+            POOL_TAG="${{ inputs.fallback-pool }}"
+            POOL_TYPE="SANDBOX"  # Default assumption for fallback
+            echo "No match found, using fallback pool: $POOL_TAG"
+          else
+            echo "::error::No matching pool found and no fallback pool provided"
+            exit 1
+          fi
+        fi
+
+        # Set outputs
+        echo "poolTag=$POOL_TAG" >> $GITHUB_OUTPUT
+        echo "poolType=$POOL_TYPE" >> $GITHUB_OUTPUT
+        echo "matched=$MATCHED" >> $GITHUB_OUTPUT
+        # Compact JSON to single line for GitHub output
+        echo "matchResult=$(echo "$MATCH_RESULT" | jq -c '.')" >> $GITHUB_OUTPUT
+
+        echo ""
+        echo "------------------------------------------------------------------------------------------"
+        echo "Match Result:"
+        echo "  Pool Tag  : $POOL_TAG"
+        echo "  Pool Type : $POOL_TYPE"
+        echo "  Matched   : $MATCHED"
+        echo "------------------------------------------------------------------------------------------"
