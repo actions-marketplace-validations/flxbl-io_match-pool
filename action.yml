@@ -1,5 +1,5 @@
 name: "Match Pool"
-description: "Match pool assignment rules based on branch and domain patterns using sfp server review-envs API"
+description: "Match pool assignment rules based on branch and domain patterns using sfp review-envs API"
 author: "flxbl-io"
 
 branding:
@@ -63,17 +63,16 @@ runs:
     - name: Match Pool Assignment Rule
       id: match
       shell: bash
-      env:
-        SFP_SERVER_URL: ${{ inputs.sfp-server-url }}
-        SFP_SERVER_TOKEN: ${{ inputs.sfp-server-token }}
       run: |
         echo "Matching pool for branch: ${{ inputs.branch }} and domain: ${{ inputs.domain }}"
 
         # Run the match command (banner goes to stderr, JSON to stdout)
-        MATCH_RESULT=$(sfp server review-envs rules match \
-          --repository "${{ inputs.repository }}" \
-          --branch "${{ inputs.branch }}" \
-          --domain "${{ inputs.domain }}" \
+        MATCH_RESULT=$(sfp review-envs rules match \
+          -r "${{ inputs.repository }}" \
+          -b "${{ inputs.branch }}" \
+          -d "${{ inputs.domain }}" \
+          --sfp-server-url "${{ inputs.sfp-server-url }}" \
+          -t "${{ inputs.sfp-server-token }}" \
           --json)
 
         # Extract values from the result

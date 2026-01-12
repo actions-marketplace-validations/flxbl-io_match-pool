@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/flxbl-io/match-pool/actions/workflows/ci.yml/badge.svg)](https://github.com/flxbl-io/match-pool/actions/workflows/ci.yml)
 
-A GitHub Action that matches pool assignment rules based on branch and domain patterns using [SFP Server](https://docs.flxbl.io/sfp-server) review-envs API.
+A GitHub Action that matches pool assignment rules based on branch and domain patterns using `sfp review-envs rules match`.
 
 ## Usage
 
