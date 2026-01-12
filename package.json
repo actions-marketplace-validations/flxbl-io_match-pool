@@ -1,0 +1,19 @@
+{
+  "name": "@flxbl-io/match-pool",
+  "version": "1.0.0",
+  "description": "GitHub Action to match pool assignment rules using sfp review-envs",
+  "author": "flxbl-io",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flxbl-io/match-pool.git"
+  },
+  "keywords": [
+    "github-action",
+    "salesforce",
+    "pool",
+    "review-envs",
+    "sfp-server",
+    "flxbl"
+  ]
+}
